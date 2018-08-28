@@ -61,7 +61,7 @@ function loadFunction() {
   var SALmodule    = document.getElementById('SALmodule');
   myMirror.setValue(
   `<?xml version="1.0" encoding="UTF-8"?>
-<hes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../schema/cavemen-3.0.xsd">
+<hes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cavemen-3.0.xsd">
     <environment>
       <entity name="Heart" quantity="1">
         <entity name="Chamber" quantity="3">
