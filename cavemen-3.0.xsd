@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified" attributeFormDefault="qualified">
+    <xsd:element name="hes">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="environment">
+                    <xsd:complexType>
+                        <xsd:sequence minOccurs="1" maxOccurs="unbounded">
+                            <xsd:element ref="entity" minOccurs="1" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="human">
+                    <xsd:complexType>
+                        <xsd:sequence minOccurs="1" maxOccurs="unbounded">
+                            <xsd:element ref="ability" minOccurs="1" maxOccurs="unbounded"/>
+                            <xsd:element ref="ability-set" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element ref="affordance" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+        <xsd:key name="object-name">
+            <xsd:selector xpath="environment/entity"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+        <xsd:key name="property-name">
+            <xsd:selector xpath=".//property"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+        <xsd:key name="ability-name">
+            <xsd:selector xpath="human/ability"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+        <xsd:key name="ability-set-name">
+            <xsd:selector xpath="human/ability-set"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+        <xsd:key name="affordance-name">
+            <xsd:selector xpath="affordance"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+        <xsd:key name="effect-name">
+            <xsd:selector xpath=".//effect"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+        <xsd:keyref name="ability-set-ref" refer="ability-name">
+            <xsd:selector xpath="human/ability-set/ability"/>
+            <xsd:field xpath="@name"/>
+        </xsd:keyref>
+        <xsd:keyref name="affordance-ability-ref" refer="ability-name">
+            <xsd:selector xpath="affordance/human-input"/>
+            <xsd:field xpath="@input"/>
+        </xsd:keyref>
+        <xsd:keyref name="affordance-property-ref" refer="property-name">
+            <xsd:selector xpath=".//environment-input | .//environment-output"/>
+            <xsd:field xpath="@name"/>
+        </xsd:keyref>
+    </xsd:element>
+
+    <xsd:element name="ability-set">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ability-ref" minOccurs="1" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:attribute name="name" use="required" type="name-attribute"/>
+                        <xsd:attribute name="quantity" use="required" type="xsd:integer"/>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+            <xsd:attribute name="name" use="required" type="name-attribute"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="entity">
+        <xsd:complexType>
+            <xsd:sequence minOccurs="1" maxOccurs="unbounded">
+                <xsd:choice minOccurs="1" maxOccurs="unbounded">
+                    <xsd:element minOccurs="0" ref="entity"/>
+                    <xsd:element minOccurs="0" maxOccurs="unbounded" ref="property"/>
+                </xsd:choice>
+            </xsd:sequence>
+            <xsd:attribute name="name" use="required" type="name-attribute"/>
+            <xsd:attribute name="quantity" use="required" type="xsd:integer"/>
+        </xsd:complexType>
+        <xsd:key name="subobject-name">
+            <xsd:selector xpath="entity"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+    </xsd:element>
+
+ <xsd:element name="property">
+    <xsd:complexType>
+        <xsd:simpleContent>
+            <xsd:extension base="value-assignment">
+                <xsd:attribute name="name" use="required" type="name-attribute"/>
+                <xsd:attribute name="type" use="required">
+                    <xsd:simpleType>
+                        <xsd:restriction base="xsd:string">
+                            <xsd:pattern value="spatial"/>
+                            <xsd:pattern value="[A-Z]+"/>
+                            <xsd:whiteSpace value="preserve"/>
+                        </xsd:restriction>
+                    </xsd:simpleType>
+                </xsd:attribute>
+                <xsd:attribute name="evolution" use="required">
+                    <xsd:simpleType>
+                        <xsd:restriction base="xsd:token">
+                            <xsd:enumeration value="human"/>
+                            <xsd:enumeration value="environment"/>
+                            <xsd:enumeration value="none"/>
+                        </xsd:restriction>
+                    </xsd:simpleType>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+ </xsd:element>
+
+    <xsd:element name="affordance">
+        <xsd:complexType>
+            <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                <xsd:element name="environment-input" minOccurs="1" maxOccurs="unbounded" type="numerical-property-value"/>
+                <xsd:element name="human-input" minOccurs="1" maxOccurs="unbounded" type="human-ability"/>
+                <xsd:element name="effect" minOccurs="0" maxOccurs="1" type="effect"/>
+            </xsd:sequence>
+            <xsd:attribute name="name" use="required" type="name-attribute"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:complexType name="effect">
+        <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+            <xsd:choice minOccurs="1" maxOccurs="unbounded">
+                <xsd:element name="environment-output" type="numerical-output-value"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute name="name" use="optional" type="name-attribute"/>
+    </xsd:complexType>
+
+    <xsd:element name="ability">
+        <xsd:complexType>
+            <xsd:all maxOccurs="1">
+                <xsd:element ref="translate" minOccurs="0" maxOccurs="1"/>
+                <xsd:element ref="position" minOccurs="0" maxOccurs="1"/>
+                <xsd:element ref="pitch" minOccurs="0" maxOccurs="1"/>
+                <xsd:element ref="roll" minOccurs="0" maxOccurs="1"/>
+                <xsd:element ref="yaw" minOccurs="0" maxOccurs="1"/>
+            </xsd:all>
+            <xsd:attribute name="name" use="required" type="name-attribute"/>
+            <xsd:attribute name="entity" use="required" type="entity-attribute"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="position">
+        <xsd:complexType>
+            <xsd:attribute name="up" type="bool-or-number"/>
+            <xsd:attribute name="down" type="bool-or-number"/>
+            <xsd:attribute name="back" type="bool-or-number"/>
+            <xsd:attribute name="forth" type="bool-or-number"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="translate">
+        <xsd:complexType>
+            <xsd:attribute name="left" type="bool-or-number"/>
+            <xsd:attribute name="right" type="bool-or-number"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="pitch">
+        <xsd:complexType>
+            <xsd:attribute name="back" type="bool-or-number"/>
+            <xsd:attribute name="forth" type="bool-or-number"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="yaw">
+        <xsd:complexType>
+            <xsd:attribute name="left" type="bool-or-number"/>
+            <xsd:attribute name="right" type="bool-or-number"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="roll">
+        <xsd:complexType>
+            <xsd:attribute name="left" type="bool-or-number"/>
+            <xsd:attribute name="right" type="bool-or-number"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:simpleType name="value-assignment">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="([a-zA-Z0-9+\.])+"/>
+            <xsd:pattern value="(.*)|([a-zA-Z0-9]+(\s*(=|&gt;|&lt;|&gt;=|&lt;=|/=)\s*)(\s*(0)?(\.)?([0-9]+)(.[0-9]+)?)(\s(OR|AND|XOR)\s[a-zA-Z0-9 ]+(=|&gt;|&lt;|&gt;=|&lt;=|/=)(\s*(0)?(\.)?([0-9]+)(.[0-9]+)?))?)+"/>
+            <xsd:whiteSpace value="preserve"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="bool-or-number">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="true|false|TRUE|FALSE"/>
+            <xsd:pattern value="(0)?(\.)?([0-9]+)(.[0-9]+)?"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="number">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="(0)?(\.)?([0-9]+)(.[0-9]+)?"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="quantity-operator">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="all"/>
+            <xsd:pattern value="none"/>
+            <xsd:pattern value="at_least(\-)[1-9]+"/>
+            <xsd:pattern value="any(\-)[1-9]+"/>
+            <xsd:pattern value="exactly(\-)[1-9]+"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="numerical-property-value">
+        <xsd:simpleContent>
+            <xsd:extension base="numerical-content">
+                <xsd:attribute name="name" type="name-attribute"/>
+                <xsd:attribute name="equality-operator" use="required" type="equality-operator"/>
+                <xsd:attribute name="quantity-operator" use="optional" type="quantity-operator"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+
+
+    <xsd:complexType name="numerical-output-value">
+        <xsd:simpleContent>
+            <xsd:extension base="numerical-content">
+                <xsd:attribute name="name" type="name-attribute"/>
+                <xsd:attribute name="equality-operator" use="required" type="equality-operator"/>
+                <xsd:attribute name="quantity-operator" use="optional" type="quantity-operator"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="human-ability">
+        <xsd:sequence maxOccurs="unbounded" minOccurs="1">
+            <xsd:choice minOccurs="0" maxOccurs="10">
+                <xsd:element name="position-up" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="position-down" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="position-back" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="position-forth" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="translate-left" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="translate-right" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="yaw-left" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="yaw-right" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="roll-left" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="roll-right" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="pitch-back" minOccurs="1" type="ability-constraint-spec"/>
+                <xsd:element name="pitch-forth" minOccurs="1" type="ability-constraint-spec"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute name="name" use="required" type="name-attribute"/>
+        <xsd:attribute name="quantity-operator" use="optional" type="quantity-operator"/>
+    </xsd:complexType>
+
+    <xsd:simpleType name="entity-attribute">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="([a-zA-Z0-9]+(\.)?)+"></xsd:pattern>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="name-attribute">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[a-zA-Z0-9]+"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="numerical-content">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value=".+"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="equality-operator">
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="greater-than"/>
+            <xsd:enumeration value="less-than"/>
+            <xsd:enumeration value="equal-to"/>
+            <xsd:enumeration value="not-equal-to"/>
+            <xsd:enumeration value="greater-than-or-equal-to"/>
+            <xsd:enumeration value="less-than-or-equal-to"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="spatial-equality-operator">
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="not-equal-to"/>
+            <xsd:enumeration value="equal-to"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="ability-constraint-spec">
+        <xsd:simpleContent>
+            <xsd:extension base="numerical-content">
+                <xsd:attribute name="equality-operator" type="equality-operator"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+</xsd:schema>

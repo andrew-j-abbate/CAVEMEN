@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+  <head>
+  <title>Capability, Affordance, and Evolving Relations Modeling (CAVEMEN)</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="pagestyle.css" rel="stylesheet" type="text/css" />
+  <link href="../dependencies/codemirror-5.10/lib/codemirror.css" rel="stylesheet" type="text/css">
+  </head>
+    <nav id="site-navigation" class="nav-bar" role="navigation">
+     <li><a href="cavemen.html">REFRESH</a></li>
+    </nav>
+    <div class="space"></div>
+    <body>
+    <script src="cavemenTranslator.js"></script>
+    <script src="cavemenWriter.js"></script>
+    <script src="cavemen.js"></script>
+    <script src="dependencies/jquery/dist/jquery.js"></script>
+    <script src="windowBehavior.js"></script>
+    <script src="dependencies/codemirror-5.10/lib/codemirror.js"></script>
+    <script src="dependencies/codemirror-5.10/mode/xml/xml.js"></script>
+    <script src="dependencies/codemirror-5.10/addon/display/placeholder.js"></script>
+    <link rel="stylesheet" href="dependencies/codemirror-5.10/addon/hint/show-hint.css">
+    <script src="dependencies/codemirror-5.10/addon/hint/show-hint.js"></script>
+    <script src="dependencies/codemirror-5.10/addon/hint/xml-hint.js"></script>
+
+    <div class="content" id="translatorTextBoxes">
+      <textarea id='xmlEntry' class="xmlBox" placeholder = 'Paste or begin typing CAVEMEN-XML model here.'></textarea>
+      <div id="buttonWrapper">
+          <input id='convertToContext' class='convertButton' value='Generate SAL Context' type='button'>
+          <input id='convert' class='convertButton' value='Generate SAL Variables and Module' type='button'>
+      </div>
+      <textarea readonly='true' id='varDeclarations' class='textBox' placeholder='SAL variable declarations will be generated here.'></textarea>
+      <textarea readonly='true' id='SALmodule' class='textBox' placeholder='The affordance module(s) will be generated here.'></textarea>
+    </div>
+
+    <div class="footer"></div>
+  </body>
+</html>
