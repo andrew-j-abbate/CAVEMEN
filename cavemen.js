@@ -142,9 +142,6 @@ function setTheClonedProperties(theNode, theNumber, theClones) {
       if (thePropertiesDepth[theOldName] === undefined) {
         thePropertiesDepth[theOldName]   = theDepth;
       }
-      if(theCloneDepth[theOldName] === undefined) {
-        theCloneDepth[theOldName] = theNumber;
-      }
       setTheNewProperty(theOldName, theNewProperty, thePropertyNode, theNumber);
       setTheClonedConstraintOf(thePropertyNode, false);
       let theCloneName = theNameOf(thePropertyNode);
@@ -189,9 +186,6 @@ function setTheClonedAbilities(theClonedNode, theNumber, theXML) {
       if (theClonedAbilities[theOriginal] === undefined) {
         theClonedAbilities[theOriginal] = {};
       }
-      if(theCloneDepth[theOriginal] === undefined) {
-        theCloneDepth[theOriginal] = theNumber;
-      }
       let theSibling   = theAbilityNode;
       let theAbility   = theAbilityNode.cloneNode(true);
       theAbility.setAttribute(toMove, theNewEntity);
@@ -227,7 +221,6 @@ function setTheClonedAffordances(theXML) {
     let theChildren = theNode.children;
     for (let theChild of anArrayContaining(theChildren)) {
       if (theChild.nodeName === anAbilityInputNode) {
-        whatToPrint[theNameOf(theChild)] = true;
         $(theChild).children()
             .map(function () {
               return this.textContent
@@ -309,7 +302,8 @@ function setTheClonedAffordances(theXML) {
 }
 
 function setTheInputLevels(theAbilityNodes, theClonesToPrint) {
-  let theHash       = {};
+  let theHash = {};
+  let theAbilityHash = {};
   for (let theProperty in theCommonProperties) {
     let theLastIndex = theCommonProperties[theProperty].length-1;
     if (theCommonProperties[theProperty][theLastIndex].constructor === Array) {
@@ -384,19 +378,18 @@ function setTheInputLevels(theAbilityNodes, theClonesToPrint) {
             }
           });
         }
-        let abilityCount = 0;
         for (let theAbility of anArrayContaining(theAbilityNodes)) {
           let theName    = theNameOf(theAbility);
           let theEntities = whatTheHumanCanMove(theAbility).split(aDot);
           if (theEntities.every(i => $.inArray(i, theOuterList) >= 0)
               && pushTheClone(theProperties, theClonesToPrint)) {
-            if (theHash[theProperties] === undefined) {
-              theHash[theProperties] = [theName];
-            } else {
-              theHash[theProperties].push(theName);
+            if (theAbilityHash[theProperties] === undefined) {
+              theAbilityHash[theProperties] = [theName];
+            }
+            if ($.inArray(theName, theAbilityHash[theProperties]) < 0) {
+              theAbilityHash[theProperties].push(theName);
             }
           }
-          abilityCount = 0;
         }
       }
     }
@@ -406,70 +399,127 @@ function setTheInputLevels(theAbilityNodes, theClonesToPrint) {
     theHash[theLevel] = theSet;
   }
   let theNewSet = {};
-  let theClones = {};
   let count     = 0;
-
   for (let theLevel in theHash) {
     theHash[theLevel].forEach(function (property) {
-      theNewSet[count] = [theLevel, property];
+      let theArray = [theLevel, property];
+      theNewSet[count] = theArray;
       count++;
     });
   }
-  count = 0;
-  for (let theOuter in theNewSet) {
-    let theOuterSet = theNewSet[theOuter];
-    for (let theInner in theNewSet) {
-      if (theOuter !== theInner) {
-        let theInnerSet = theNewSet[theInner];
-        if (theInnerSet.some(i => $.inArray(i, theOuterSet) >= 0)) {
-          let theArray = [...theOuterSet];
-          theInnerSet.forEach(function (i) {
-            theArray.push(i)
-          });
-          let theCloneSet = [...new Set(theArray)]
-          if (theClones[count] === undefined) {
-            theClones[count] = theCloneSet;
+  let theNewHash = {};
+  let newHashCount = 0;
+  for (let theKey in theHash) {
+    let theProperty = theKey;
+    let theProperties = theHash[theKey];
+    let theFilteredSet = theProperties.map(i => theFilteredLHS(i));
+    let theCloneSet = {};
+    theFilteredSet.forEach(property => {
+      if (theCloneSet[property] === undefined) {
+        theCloneSet[property] = 0;
+      }
+      if ($.inArray(theFilteredLHS(property), theFilteredSet) >= 0) {
+        theCloneSet[property]++;
+      }
+    });
+    let theNewArray = {};
+    let uniqueArray = {};
+    theProperties.forEach(property => {
+      let theFilteredProperty = theFilteredLHS(property);
+      if (theCloneSet[theFilteredProperty] > 1) {
+        if (theNewArray[theFilteredProperty] === undefined) {
+          theNewArray[theFilteredProperty] = [property];
+        } else {
+          theNewArray[theFilteredProperty].push(property);
+        }
+      } else {
+        uniqueArray[property] = true;
+      }
+    });
+    let theCombinedArrays = {};
+    Object.keys(theNewArray).forEach(outerKey => {
+      let combinedArray = [];
+      let combinedArrayCount = 0;
+      Object.keys(theNewArray).forEach(innerKey => {
+        if (innerKey !== outerKey) {
+          let outerArray = theNewArray[outerKey];
+          let innerArray = theNewArray[innerKey];
+          if (combinedArray.length < 1) {
+             combinedArray = outerArray.map((i, j) => [i, innerArray[j]]);
+          } else {
+            let combinedArray2 = outerArray.map((i, j) => [i, innerArray[j]]);
+            combinedArray = combinedArray.concat(combinedArray2);
           }
-          let theFilteredSet = theClones[count].map(i => theFilteredLHS(i));
-          theInnerSet.forEach(function (i) {
-            if ($.inArray(theFilteredLHS(i), theFilteredSet) < 0) {
-              theClones[count].push(i);
-            }
-          });
-          theClones[count] =  [...new Set(theClones[count])]
-          if (theClones[count].length >= theClonesToPrint.length) {
-            count++;
-          }
+        }
+      });
+      for (let theArray in combinedArray) {
+        theCombinedArrays[combinedArrayCount] = combinedArray[theArray];
+        combinedArrayCount++;
+      }
+    });
+    if (Object.keys(theCombinedArrays).length > 0) {
+      for (let theArray in theCombinedArrays) {
+        theNewHash[newHashCount] = [theKey, ...Object.keys(uniqueArray), ...theCombinedArrays[theArray]];
+        newHashCount++;
+      }
+    } else {
+      let theArray = theNewArray[Object.keys(theNewArray)[0]];
+      if (theArray === undefined) {
+        theNewHash[newHashCount] = [theKey, ...Object.keys(uniqueArray)];
+        newHashCount++;
+      } else {
+        for (let theProperty in theArray) {
+          theNewHash[newHashCount] = [theKey, ...Object.keys(uniqueArray), theArray[theProperty]];
+          newHashCount++;
         }
       }
     }
   }
-  Object.keys(theClones).forEach(function(set) {
-    Object.keys(theClones).forEach(function(copy) {
-      if (set !== copy) {
-        if (theClones[set] !== undefined) {
-          let theSet  = theClones[set].sort().join();
-          let theCopy = theClones[copy].sort().join();
-          if (theSet === theCopy) {
-            delete theClones[copy];
-          }
-        }
-      }
-    });
+  let theSpatialHash = {};
+  let theNonSpatialHash = {};
+  Object.keys(theNewHash).forEach(i => {
+    theSpatialHash[i] = theNewHash[i].filter(j => $.inArray(j, Object.keys(theSpatialProperties)) >= 0);
   });
-  let theSortedClones = {};
-  let newCount        = 0;
-  let theFilteredClonesToPrint = theClonesToPrint.map(i => theFilteredLHS(i)).sort().join();
-  Object.keys(theClones).forEach(function(set) {
-    let theFilteredClones = theClones[set].map(i => theFilteredLHS(i)).sort().join();
-    if (theFilteredClonesToPrint !== theFilteredClones) {
-      delete theClones[set];
-    } else {
-      theSortedClones[newCount] = theClones[set];
-      newCount++
+  Object.keys(theNewHash).forEach(i => {
+    if (theNewHash[i].some(j => $.inArray(j, Object.keys(theSpatialProperties)) < 0)) {
+      theNonSpatialHash[i] = theNewHash[i];
     }
   });
-  let theFixedClones = fixTheClones(theSortedClones);
+  let theSpatialCloneCount = [...new Set(Object.keys(theSpatialProperties).map(i => theFilteredLHS(i)))].length;
+  let theClones = combineTheHash(theSpatialHash, theSpatialCloneCount);
+  for (let theClone in theClones) {
+    for (let theNonSpatials in theNonSpatialHash) {
+      let theProperties = theNonSpatialHash[theNonSpatials];
+      let theMatchers = theProperties.filter(i => $.inArray(i, Object.keys(theSpatialProperties)) >= 0);
+      if (theMatchers.every(i => $.inArray(i, theClones[theClone]) >= 0)) {
+        let whatToPush = theProperties.filter(i => $.inArray(i, Object.keys(theSpatialProperties)) < 0);
+        theClones[theClone].push(...whatToPush);
+        whatToPush.forEach(i => {
+          if ($.inArray(theFilteredLHS(i), theClonesToPrint) < 0) {
+            theClonesToPrint.push(i);
+          }
+        });
+      }
+    }
+  }
+  for (let theClone in theClones) {
+    theClones[theClone].forEach(clone => {
+      let abilities = theAbilityHash[clone];
+      if (abilities !== undefined) {
+        abilities.forEach(ability => {
+          if ($.inArray(ability, theClones[theClone]) < 0) {
+            theClones[theClone].push(ability);
+          }
+          if ($.inArray(theFilteredLHS(ability), theClonesToPrint) < 0) {
+            theClonesToPrint.push(theFilteredLHS(ability));
+          }
+        });
+      }
+    });
+  }
+  let theSortedClones = {};
+  let newCount        = 0;
+  let theFixedClones = fixTheClones(theClones);
   return theFixedClones;
 }
 
@@ -501,22 +551,56 @@ function getAllTheProperties(theNode, theName, allAbilityNodes) {
 
 function getTheNonRecordSiblings(theNode, theChildName) {
   if (theNode   !== null) {
-    let theAunt   = theNode.nextElementSibling;
-    if (theAunt !== null) {
-      let theProperties = theAunt.children;
-      let theAuntName   = theNameOf(theAunt);
-      for (let theProperty of anArrayContaining(theProperties)) {
-        let theCousin = theNameOf(theProperty);
-        if (theSiblingSpatials[theChildName] === undefined) {
-          theSiblingSpatials[theChildName] = [];
-        }
-        if ($.inArray(theCousin, theSiblingSpatials[theChildName]) < 0
-           && theFilteredLHS(theCousin) !== theFilteredLHS(theChildName)) {
-          theSiblingSpatials[theChildName].push(theCousin);
+    let theAunts = $(theNode).siblings().get();
+    for (let theClone in theAunts) {
+      let theAunt = theAunts[theClone];
+      if (theAunt !== null) {
+        let theProperties = theAunt.children;
+        let theAuntName   = theNameOf(theAunt);
+        for (let theProperty of anArrayContaining(theProperties)) {
+          let theCousin = theNameOf(theProperty);
+          if (theSiblingSpatials[theChildName] === undefined) {
+            theSiblingSpatials[theChildName] = [];
+          }
+          if ($.inArray(theCousin, theSiblingSpatials[theChildName]) < 0
+             && theCousin !== theChildName) {
+            theSiblingSpatials[theChildName].push(theCousin);
+          }
         }
       }
-      getTheNonRecordSiblings(theAunt, theChildName);
     }
+  }
+}
+
+function combineTheHash(testClones, cloneCount) {
+  let testClones1 = {};
+  for (let theOuter in testClones) {
+    for (let theInner in testClones) {
+      if (theOuter !== theInner) {
+        let theOuterSet = testClones[theOuter];
+        let theInnerSet = testClones[theInner];
+        let matches = 0;
+        theOuterSet.forEach(i => $.inArray(i, theInnerSet) ? matches++ : matches = matches);
+        if (matches == theInnerSet.length) {
+          let theArray = [... new Set(theOuterSet.concat(theInnerSet))];
+          let theFilteredSet = [... new Set(theArray.map(i => theFilteredLHS(i)))];
+          if (theArray.length == theFilteredSet.length) {
+            testClones1[theArray.sort().join()] = true;
+          }
+        }
+      }
+    }
+  }
+  let testCount = 0;
+  let theNewSet = {};
+  Object.keys(testClones1).forEach(key => {
+    theNewSet[testCount] = key.split(',').sort();
+    testCount++;
+  });
+  if (Object.keys(theNewSet).every(i => theNewSet[i].length == cloneCount)) {
+    return theNewSet;
+  } else {
+    return combineTheHash(theNewSet, cloneCount);
   }
 }
 
@@ -534,14 +618,14 @@ function theFullRecords(theRecord) {
 }
 
 function thePowerSet(theList, theLength, isTheAbilitySet) {
-  var set = [],
-    listSize = theList.length,
-    combinationsCount = (1 << listSize);
+  let set = [],
+  listSize = theList.length,
+  combinationsCount = (1 << listSize);
   for (let i=1; i<combinationsCount; i++){
-    var combination = [];
+    let combination = [];
     for (let j=0; j<listSize; j++){
       if ((i & (1 << j))){
-          combination.push(theList[j]);
+        combination.push(theList[j]);
       }
     }
     if(combination.length == theLength) {
@@ -703,6 +787,22 @@ function setTheClonedConstraintOf(theNode, isAnAffordanceConstraint) {
         setTheNumericalConstraint(theNode, theTag);
     }
   }
+}
+
+function getThePairedSpatials() {
+  let thePairedProperties = {};
+  let count = 0;
+  Object.keys(theSpatialPairs).forEach(i => {
+    Object.keys(theSpatialPairs).forEach(j => {
+      if (theFilteredLHS(i) !== theFilteredLHS(j)) {
+        if (theSpatialPairs[i].sort().join() === theSpatialPairs[j].sort().join()) {
+          thePairedProperties[count] = [i, j].sort();
+          count++;
+        }
+      }
+    });
+  });
+  return thePairedProperties;
 }
 
 function setTheNumericalConstraint(theNode, theTag) {
@@ -1188,14 +1288,15 @@ function getEXACTLYConstraintsFor(theAffordance, theLHS, theRHS, theEquality, th
               .substring(theProperties[1].lastIndexOf(underscore), theProperties[1].length);
           let theLHSObject = theLHS.substring(0, theLHS.indexOf(openSquareBracket));
           let theNewObject = theCloneConstraint.substring(0, theCloneConstraint.indexOf(openSquareBracket));
-          if (theCount <= theDepth  &&
-            theFilteredLHS(thePropertyHash[theLHSObject]) ===
+          if (theFilteredLHS(thePropertyHash[theLHSObject]) ===
             theFilteredLHS(thePropertyHash[theNewObject]) &&
-            theProperties[0] === theProperties[1]) {
+            theProperties[0] === theProperties[1] &&
+            !itPrinted[theCloneConstraint]) {
             theAffordanceFunction += theOpening +
                 theCloneConstraint + theOperator(theEquality) +
                 theRHS + theClosing;
             theCount++;
+            itPrinted[theCloneConstraint] = true;
           }
         }
       }

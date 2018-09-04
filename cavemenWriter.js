@@ -426,12 +426,6 @@ function printTheAffordances() {
               theQuantity      = null;
             } else {
               theQuantity      = atLeast;
-          }
-        } else if (theQuantity.includes(atMost)) {
-            if (theNumber<2) {
-              theQuantity      = null;
-            } else {
-              theQuantity      = atMost;
             }
           }
         }
